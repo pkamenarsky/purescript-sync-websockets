@@ -1,9 +1,8 @@
-module Socket where
+module Network.WebSockets.Sync.Socket where
 
 import Control.Monad.Eff
 
 import Data.Function
-import Data.JSON
 
 import Prelude
 

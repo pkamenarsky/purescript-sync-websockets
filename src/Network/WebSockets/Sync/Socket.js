@@ -1,6 +1,6 @@
 'use strict';
 
-// module Socket
+// module Network.WebSockets.Sync.Socket
 
 // TODO: how to deal with timeouts??? timeout 3 sec -> try next server?
 // TODO: try another node after n failed reconnects

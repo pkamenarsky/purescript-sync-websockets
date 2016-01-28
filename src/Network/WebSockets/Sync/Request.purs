@@ -1,4 +1,4 @@
-module Request where
+module Network.WebSockets.Sync.Request where
 
 import Control.Monad.Aff (Aff(), makeAff)
 import Control.Monad.Eff.Exception
@@ -9,7 +9,7 @@ import Type.Proxy
 
 import Prelude
 
-import qualified Socket as S
+import qualified Network.WebSockets.Sync.Socket as S
 
 data Tuple3 a b c = Tuple3 a b c
 
