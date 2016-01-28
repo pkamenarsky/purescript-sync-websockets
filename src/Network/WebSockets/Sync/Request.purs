@@ -14,14 +14,10 @@ import qualified Network.WebSockets.Sync.Socket as S
 data Proxy t = Proxy
 
 instance proxyToJson :: (ToJSON t) => ToJSON (Proxy t) where
-  toJSON (Proxy ) = object $
-    [ "tag" .= "Proxy"
-    , "contents" .= ([] :: Array String)
-    ]
+  toJSON Proxy = JArray []
 
 instance proxyFromJson :: (FromJSON t) => FromJSON (Proxy t) where
-    parseJSON (JObject o) = return Proxy
-    parseJSON _ = fail "Can't parse Proxy"
+    parseJSON _ = return Proxy
 
 data Tuple3 a b c = Tuple3 a b c
 
