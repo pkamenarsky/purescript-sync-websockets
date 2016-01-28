@@ -72,8 +72,6 @@ instance keyFromJson :: FromJSON (Key a) where
     tuple <- parseJSON v
     return $ Key { unKey : tuple }
 
-type Text = String
-
 send :: forall eff a. (ToJSON a) => S.Socket -> a -> Aff (websocket :: S.WebSocket | eff) Unit
 send socket req = makeAff f
   where
