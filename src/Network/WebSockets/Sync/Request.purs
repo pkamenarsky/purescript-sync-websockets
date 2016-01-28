@@ -5,11 +5,23 @@ import Control.Monad.Eff.Exception
 
 import Data.JSON
 import Data.Maybe
-import Type.Proxy
 
 import Prelude
 
 import qualified Network.WebSockets.Sync.Socket as S
+
+-- can't use Type.Proxy because of orphan instances
+data Proxy t = Proxy
+
+instance proxyToJson :: (ToJSON t) => ToJSON (Proxy t) where
+  toJSON (Proxy ) = object $
+    [ "tag" .= "Proxy"
+    , "contents" .= ([] :: Array String)
+    ]
+
+instance proxyFromJson :: (FromJSON t) => FromJSON (Proxy t) where
+    parseJSON (JObject o) = return Proxy
+    parseJSON _ = fail "Can't parse Proxy"
 
 data Tuple3 a b c = Tuple3 a b c
 
