@@ -1,0 +1,21 @@
+{
+  "name": "purescript-sync-websockets",
+  "version": "0.1.0",
+  "moduleType": [
+    "node"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ],
+  "dependencies": {
+    "purescript-console": "^0.1.0",
+    "purescript-prelude": "*",
+    "purescript-affjax": "*",
+    "purescript-proxy": "*",
+    "purescript-websocket-simple": "zudov/purescript-websocket-simple",
+    "purescript-json": "philopon/purescript-json"
+  }
+}
