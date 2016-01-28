@@ -57,10 +57,6 @@ mkKey a b c = Key { unKey: Tuple3 a b c }
 coerceKey :: forall a b. Key a -> Key b
 coerceKey (Key t) = Key t
 
-data Session
-
-type SessionId = Key Session
-
 instance tuple3ToJson :: (ToJSON a, ToJSON b, ToJSON c) => ToJSON (Tuple3 a b c) where
   toJSON (Tuple3 a b c) = JArray [ toJSON a, toJSON b, toJSON c ]
 
