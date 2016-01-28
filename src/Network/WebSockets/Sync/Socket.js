@@ -80,7 +80,7 @@ exports.setHandlersImpl = function(si, handlers) {
   };
 };
 
-exports.connectImpl = function(uri, handlers, si_old) {
+exports.connectImpl = function(uri, reconnect_on_fail, handlers, si_old) {
   return function() {
     console.log("Connecting to " + uri + "...");
 
@@ -159,14 +159,18 @@ exports.connectImpl = function(uri, handlers, si_old) {
       console.error("Socket error (" + uri + "): " + error);
 
       if (si.handlers.disconnected != null) si.handlers.disconnected();
-      timeout(uri, 3000, function() {exports.connectImpl(uri, si.handlers, si)();});
+
+      if (reconnect_on_fail)
+        timeout(uri, 3000, function() {exports.connectImpl(uri, reconnect_on_fail, si.handlers, si)();});
     }
 
     si.socket.onclose = function() {
       console.error("Closing socket to " + uri + "...");
 
       if (si.handlers.disconnected != null) si.handlers.disconnected();
-      timeout(uri, 3000, function() {exports.connectImpl(uri, si.handlers, si)();});
+
+      if (reconnect_on_fail)
+        timeout(uri, 3000, function() {exports.connectImpl(uri, reconnect_on_fail, si.handlers, si)();});
     }
 
     return si;
