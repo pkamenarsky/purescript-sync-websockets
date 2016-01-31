@@ -43,6 +43,10 @@ function _send(si, msg) {
     si.requests = si.requests || [];
     si.requests.push(msg);
 
+    if (si.lazy_reconnect) {
+      timeout(uri, 0, function() {exports.connectImpl(si.uri, si.lazy_reconnect, si.handlers, si)();});
+    }
+
     return false;
   }
 
@@ -80,7 +84,7 @@ exports.setHandlersImpl = function(si, handlers) {
   };
 };
 
-exports.connectImpl = function(uri, reconnect_on_fail, handlers, si_old) {
+exports.connectImpl = function(uri, lazy_reconnect, handlers, si_old) {
   return function() {
     console.log("Connecting to " + uri + "...");
 
@@ -94,8 +98,10 @@ exports.connectImpl = function(uri, reconnect_on_fail, handlers, si_old) {
     }
 
     var si = si_old || {
+      uri: uri,
       sync_requests: {},
       handlers: handlers,
+      lazy_reconnect: lazy_reconnect,
       requests: []
     };
     si.socket = new WebSocket(uri);
@@ -160,8 +166,8 @@ exports.connectImpl = function(uri, reconnect_on_fail, handlers, si_old) {
 
       if (si.handlers.disconnected != null) si.handlers.disconnected();
 
-      if (reconnect_on_fail)
-        timeout(uri, 3000, function() {exports.connectImpl(uri, reconnect_on_fail, si.handlers, si)();});
+      if (!si.lazy_reconnect)
+        timeout(uri, 3000, function() {exports.connectImpl(si.uri, si.lazy_reconnect, si.handlers, si)();});
     }
 
     si.socket.onclose = function() {
@@ -169,8 +175,8 @@ exports.connectImpl = function(uri, reconnect_on_fail, handlers, si_old) {
 
       if (si.handlers.disconnected != null) si.handlers.disconnected();
 
-      if (reconnect_on_fail)
-        timeout(uri, 3000, function() {exports.connectImpl(uri, reconnect_on_fail, si.handlers, si)();});
+      if (!si.lazy_reconnect)
+        timeout(uri, 3000, function() {exports.connectImpl(si.uri, si.lazy_reconnect, si.handlers, si)();});
     }
 
     return si;
