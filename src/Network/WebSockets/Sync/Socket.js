@@ -44,7 +44,7 @@ function _send(si, msg) {
     si.requests.push(msg);
 
     if (si.lazy_reconnect) {
-      timeout(uri, 0, function() {exports.connectImpl(si.uri, si.lazy_reconnect, si.handlers, si)();});
+      timeout(si.uri, 0, function() {exports.connectImpl(si.uri, si.lazy_reconnect, si.handlers, si)();});
     }
 
     return false;
@@ -167,7 +167,7 @@ exports.connectImpl = function(uri, lazy_reconnect, handlers, si_old) {
       if (si.handlers.disconnected != null) si.handlers.disconnected();
 
       if (!si.lazy_reconnect)
-        timeout(uri, 3000, function() {exports.connectImpl(si.uri, si.lazy_reconnect, si.handlers, si)();});
+        timeout(si.uri, 3000, function() {exports.connectImpl(si.uri, si.lazy_reconnect, si.handlers, si)();});
     }
 
     si.socket.onclose = function() {
@@ -176,7 +176,7 @@ exports.connectImpl = function(uri, lazy_reconnect, handlers, si_old) {
       if (si.handlers.disconnected != null) si.handlers.disconnected();
 
       if (!si.lazy_reconnect)
-        timeout(uri, 3000, function() {exports.connectImpl(si.uri, si.lazy_reconnect, si.handlers, si)();});
+        timeout(si.uri, 3000, function() {exports.connectImpl(si.uri, si.lazy_reconnect, si.handlers, si)();});
     }
 
     return si;
