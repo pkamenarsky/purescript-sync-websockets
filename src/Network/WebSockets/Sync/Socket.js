@@ -37,9 +37,13 @@ function makeid()
 
 function _send(si, msg) {
   if (si.socket && si.socket.readyState === 1) {
+    console.log("Sending ++ " + msg);
+
     si.socket.send(msg);
   }
   else {
+    console.log("Backlogging ++ " + msg);
+
     si.requests = si.requests || [];
     si.requests.push(msg);
 
@@ -54,6 +58,8 @@ function _send(si, msg) {
 }
 
 function establishConnection(si) {
+  console.log("Connecting to " + si.uri + "...");
+
   si.socket = new WebSocket(si.uri);
 
   /*
@@ -83,6 +89,12 @@ function establishConnection(si) {
     var data = JSON.parse(msg.data);
 
     console.log(data);
+
+    // close connection after response
+    if (si.lazy_connect) {
+      si.socket.close();
+      si.socket = null;
+    }
 
     if (data && "sync-response" === data.cmd) {
       if (data.rid) {
@@ -163,8 +175,6 @@ exports.setHandlersImpl = function(si, handlers) {
 
 exports.connectImpl = function(uri, lazy_connect, handlers, si_old) {
   return function() {
-    console.log("Connecting to " + uri + "...");
-
     if (si_old && si_old.socket) {
       si_old.socket.onclose = undefined;
       si_old.socket.onerror = undefined;
