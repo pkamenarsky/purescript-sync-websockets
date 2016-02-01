@@ -43,14 +43,91 @@ function _send(si, msg) {
     si.requests = si.requests || [];
     si.requests.push(msg);
 
-    if (si.lazy_reconnect) {
-      timeout(si.uri, 0, function() {exports.connectImpl(si.uri, si.lazy_reconnect, si.handlers, si)();});
+    if (si.lazy_connect) {
+      establishConnection(si);
     }
 
     return false;
   }
 
   return true;
+}
+
+function establishConnection(si) {
+  si.socket = new WebSocket(si.uri);
+
+  /*
+  window.addEventListener("beforeunload", function() {
+    si.socket.close();
+  });
+  */
+
+  si.socket.onopen = function() {
+    if (si.handlers.connected != null) {
+      var r = si.handlers.connected(si);
+
+      // PureScript returns thunk
+      if (typeof r === "function")
+        r();
+    }
+
+    // send all outstanding requests
+    var requests = si.requests || [];
+
+    // send until all requests are sent or there's an error again
+    while (requests.length > 0 && _send(si, requests.shift()))
+      ;
+  }
+
+  si.socket.onmessage = function(msg) {
+    var data = JSON.parse(msg.data);
+
+    console.log(data);
+
+    if (data && "sync-response" === data.cmd) {
+      if (data.rid) {
+        if (data.response && si.sync_requests[data.rid]) {
+          var r = si.sync_requests[data.rid](JSON.stringify(data.response));
+
+          // PureScript returns thunk
+          if (typeof r === "function")
+            r();
+
+        }
+        else if (data.error) {
+          console.error(data.error);
+        }
+
+        delete si.sync_requests[data.rid];
+      }
+    }
+    else if (data && "async-message" === data.cmd) {
+      if (data.message != null)
+        var r = si.handlers.message(JSON.stringify(data.message));
+
+        // PureScript returns thunk
+        if (typeof r === "function")
+          r();
+    }
+  }
+
+  si.socket.onerror = function(error) {
+    console.error("Socket error (" + si.uri + "): " + error);
+
+    if (si.handlers.disconnected != null) si.handlers.disconnected();
+
+    if (!si.lazy_connect)
+      timeout(si.uri, 3000, function() {exports.connectImpl(si.uri, si.lazy_connect, si.handlers, si)();});
+  }
+
+  si.socket.onclose = function() {
+    console.log("Closing socket to " + si.uri + "...");
+
+    if (si.handlers.disconnected != null) si.handlers.disconnected();
+
+    if (!si.lazy_connect)
+      timeout(si.uri, 3000, function() {exports.connectImpl(si.uri, si.lazy_connect, si.handlers, si)();});
+  }
 }
 
 exports.sendImpl = function(si, msg) {
@@ -84,7 +161,7 @@ exports.setHandlersImpl = function(si, handlers) {
   };
 };
 
-exports.connectImpl = function(uri, lazy_reconnect, handlers, si_old) {
+exports.connectImpl = function(uri, lazy_connect, handlers, si_old) {
   return function() {
     console.log("Connecting to " + uri + "...");
 
@@ -101,85 +178,12 @@ exports.connectImpl = function(uri, lazy_reconnect, handlers, si_old) {
       uri: uri,
       sync_requests: {},
       handlers: handlers,
-      lazy_reconnect: lazy_reconnect,
+      lazy_connect: lazy_connect,
       requests: []
     };
 
-    if (!lazy_reconnect) {
-      si.socket = new WebSocket(uri);
-
-      /*
-      window.addEventListener("beforeunload", function() {
-        si.socket.close();
-      });
-      */
-
-      si.socket.onopen = function() {
-        if (si.handlers.connected != null) {
-          var r = si.handlers.connected(si);
-
-          // PureScript returns thunk
-          if (typeof r === "function")
-            r();
-        }
-
-        // send all outstanding requests
-        var requests = si.requests || [];
-
-        // send until all requests are sent or there's an error again
-        while (requests.length > 0 && _send(si, requests.shift()))
-          ;
-      }
-
-      si.socket.onmessage = function(msg) {
-        var data = JSON.parse(msg.data);
-
-        console.log(data);
-
-        if (data && "sync-response" === data.cmd) {
-          if (data.rid) {
-            if (data.response && si.sync_requests[data.rid]) {
-              var r = si.sync_requests[data.rid](JSON.stringify(data.response));
-
-              // PureScript returns thunk
-              if (typeof r === "function")
-                r();
-
-            }
-            else if (data.error) {
-              console.error(data.error);
-            }
-
-            delete si.sync_requests[data.rid];
-          }
-        }
-        else if (data && "async-message" === data.cmd) {
-          if (data.message != null)
-            var r = si.handlers.message(JSON.stringify(data.message));
-
-            // PureScript returns thunk
-            if (typeof r === "function")
-              r();
-        }
-      }
-
-      si.socket.onerror = function(error) {
-        console.error("Socket error (" + uri + "): " + error);
-
-        if (si.handlers.disconnected != null) si.handlers.disconnected();
-
-        if (!si.lazy_reconnect)
-          timeout(si.uri, 3000, function() {exports.connectImpl(si.uri, si.lazy_reconnect, si.handlers, si)();});
-      }
-
-      si.socket.onclose = function() {
-        console.error("Closing socket to " + uri + "...");
-
-        if (si.handlers.disconnected != null) si.handlers.disconnected();
-
-        if (!si.lazy_reconnect)
-          timeout(si.uri, 3000, function() {exports.connectImpl(si.uri, si.lazy_reconnect, si.handlers, si)();});
-      }
+    if (!lazy_connect) {
+      establishConnection(si);
     }
 
     return si;
