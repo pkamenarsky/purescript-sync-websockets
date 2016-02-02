@@ -98,7 +98,7 @@ function establishConnection(si) {
 
     if (data && "sync-response" === data.cmd) {
       if (data.rid) {
-        if (data.response && si.sync_requests[data.rid]) {
+        if (si.sync_requests[data.rid]) {
           var r = si.sync_requests[data.rid](JSON.stringify(data.response));
 
           // PureScript returns thunk
