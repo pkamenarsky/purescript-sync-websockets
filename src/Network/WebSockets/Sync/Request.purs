@@ -1,10 +1,13 @@
 module Network.WebSockets.Sync.Request where
 
-import Control.Monad.Aff (Aff(), makeAff)
+import Control.Monad.Aff (Aff(), attempt, makeAff)
 import Control.Monad.Eff.Exception
 
+import Data.Either (Either)
 import Data.JSON
 import Data.Maybe
+
+import Debug.Trace (spy)
 
 import Prelude
 
@@ -75,18 +78,18 @@ send socket req = makeAff f
       S.send socket (encode req)
       cb unit
 
-sendSync' :: forall eff a. (FromJSON a) => S.Socket -> String -> Aff (websocket :: S.WebSocket | eff) a
-sendSync' socket req = makeAff f
+sendSync' :: forall eff a. (FromJSON a) => S.Socket -> String -> Aff (websocket :: S.WebSocket | eff) (Either Error a)
+sendSync' socket req = attempt $ makeAff f
   where
     f err cb = do
       S.sendSync socket req $ \msg -> case decode msg of
         Just msg' -> cb msg'
-        Nothing   -> err $ error $ "Could not parse message: " ++ msg
+        Nothing   -> err $ spy $ error $ "Could not parse message: " ++ msg
 
-sendSync :: forall eff a b. (ToJSON a, FromJSON b) => S.Socket -> (Proxy b -> a) -> Aff (websocket :: S.WebSocket | eff) b
-sendSync socket req = makeAff f
+sendSync :: forall eff a b. (ToJSON a, FromJSON b) => S.Socket -> (Proxy b -> a) -> Aff (websocket :: S.WebSocket | eff) (Either Error b)
+sendSync socket req = attempt $ makeAff f
   where
     f err cb = do
       S.sendSync socket (encode (req Proxy)) $ \msg -> case decode msg of
         Just msg' -> cb msg'
-        Nothing   -> err $ error $ "Could not parse message: " ++ msg
+        Nothing   -> err $ spy $ error $ "Could not parse message: " ++ msg
