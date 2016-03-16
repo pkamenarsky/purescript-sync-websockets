@@ -15,6 +15,7 @@
     "purescript-prelude": "*",
     "purescript-affjax": "*",
     "purescript-proxy": "*",
+    "purescript-debug": "*",
     "purescript-websocket-simple": "zudov/purescript-websocket-simple",
     "purescript-json": "philopon/purescript-json"
   }
