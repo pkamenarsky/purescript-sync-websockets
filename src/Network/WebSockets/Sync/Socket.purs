@@ -16,11 +16,12 @@ type WebSocketHandlers eff =
   { connected :: Socket -> WebSocketEff eff Unit
   , disconnected :: WebSocketEff eff Unit
   , message :: String -> WebSocketEff eff Unit
+  , debug :: Boolean
   }
 
-type ReconnectOnFail = Boolean
+type KeepAlive = Boolean
 
-foreign import connectImpl :: forall eff. Fn3 String ReconnectOnFail (WebSocketHandlers eff) (WebSocketEff eff Socket)
+foreign import connectImpl :: forall eff. Fn3 String KeepAlive (WebSocketHandlers eff) (WebSocketEff eff Socket)
 
 foreign import sendImpl :: forall eff. Fn2 Socket String (WebSocketEff eff Unit)
 
@@ -28,8 +29,8 @@ foreign import sendSyncImpl :: forall eff. Fn3 Socket String (String -> WebSocke
 
 foreign import setHandlersImpl :: forall eff. Fn2 Socket (WebSocketHandlers eff) (WebSocketEff eff Unit)
 
-connect :: forall eff. String -> ReconnectOnFail -> WebSocketHandlers eff -> WebSocketEff eff Socket
-connect url reconnectOnFail handlers = runFn3 connectImpl url reconnectOnFail handlers
+connect :: forall eff. String -> KeepAlive -> WebSocketHandlers eff -> WebSocketEff eff Socket
+connect url keepAlive handlers = runFn3 connectImpl url keepAlive handlers
 
 send :: forall eff. Socket -> String -> WebSocketEff eff Unit
 send socket msg = runFn2 sendImpl socket msg

@@ -37,12 +37,12 @@ function makeid()
 
 function _send(si, msg) {
   if (si.socket && si.socket.readyState === 1) {
-    if (si.debug_log) console.log("Sending ++ " + msg);
+    if (si.handlers.debug_log) console.log("Sending: " + msg);
 
     si.socket.send(msg);
   }
   else {
-    if (si.debug_log) console.log("Backlogging ++ " + msg);
+    if (si.handlers.debug_log) console.log("Backlogging: " + msg);
 
     si.requests = si.requests || [];
     si.requests.push(msg);
@@ -58,7 +58,7 @@ function _send(si, msg) {
 }
 
 function establishConnection(si) {
-  if (si.debug_log) console.log("Connecting to " + si.uri + "...");
+  if (si.handlers.debug_log) console.log("Connecting to " + si.uri + "...");
 
   si.socket = new WebSocket(si.uri);
 
@@ -88,7 +88,7 @@ function establishConnection(si) {
   si.socket.onmessage = function(msg) {
     var data = JSON.parse(msg.data);
 
-    if (si.debug_log) console.log(data);
+    if (si.handlers.debug_log) console.log(data);
 
     // close connection after response
     if (!si.keep_alive) {
@@ -133,7 +133,7 @@ function establishConnection(si) {
   }
 
   si.socket.onclose = function() {
-    if (si.debug_log) console.log("Closing socket to " + si.uri + "...");
+    if (si.handlers.debug_log) console.log("Closing socket to " + si.uri + "...");
 
     if (si.handlers.disconnected != null) si.handlers.disconnected();
 
@@ -182,7 +182,7 @@ exports.killConnection = function(si_victim) {
   si_victim.socket.close();
 };
 
-exports.connectImpl = function(uri, keep_alive, handlers, si_old, debug_log) {
+exports.connectImpl = function(uri, keep_alive, handlers, si_old) {
   return function() {
     if (si_old && si_old.socket) {
       exports.killConnection(si_old);
@@ -193,7 +193,6 @@ exports.connectImpl = function(uri, keep_alive, handlers, si_old, debug_log) {
       sync_requests: {},
       handlers: handlers,
       keep_alive: keep_alive,
-      debug_log: debug_log,
       requests: []
     };
 
