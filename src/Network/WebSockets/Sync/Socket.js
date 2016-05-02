@@ -173,15 +173,19 @@ exports.setHandlersImpl = function(si, handlers) {
   };
 };
 
+exports.killConnection = function(si_victim) {
+  si_victim.socket.onclose = undefined;
+  si_victim.socket.onerror = undefined;
+  si_victim.socket.onmessage = undefined;
+  si_victim.socket.onopen = undefined;
+
+  si_victim.socket.close();
+};
+
 exports.connectImpl = function(uri, lazy_connect, handlers, si_old, debug_log) {
   return function() {
     if (si_old && si_old.socket) {
-      si_old.socket.onclose = undefined;
-      si_old.socket.onerror = undefined;
-      si_old.socket.onmessage = undefined;
-      si_old.socket.onopen = undefined;
-
-      si_old.socket.close();
+      exports.killConnection(si_old);
     }
 
     var si = si_old || {
