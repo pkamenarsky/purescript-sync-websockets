@@ -84,7 +84,7 @@ sendSync' socket req = attempt $ makeAff f
     f err cb = do
       S.sendSync socket req $ \msg -> case decode msg of
         Just msg' -> cb msg'
-        Nothing   -> err $ spy $ error $ "Could not parse message: " ++ msg
+        Nothing   -> err $ error $ "Could not parse message: " ++ msg
 
 sendSync :: forall eff a b. (ToJSON a, FromJSON b) => S.Socket -> (Proxy b -> a) -> Aff (websocket :: S.WebSocket | eff) (Either Error b)
 sendSync socket req = attempt $ makeAff f
@@ -92,4 +92,4 @@ sendSync socket req = attempt $ makeAff f
     f err cb = do
       S.sendSync socket (encode (req Proxy)) $ \msg -> case decode msg of
         Just msg' -> cb msg'
-        Nothing   -> err $ spy $ error $ "Could not parse message: " ++ msg
+        Nothing   -> err $ error $ "Could not parse message: " ++ msg
