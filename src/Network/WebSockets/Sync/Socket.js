@@ -47,7 +47,7 @@ function _send(si, msg) {
     si.requests = si.requests || [];
     si.requests.push(msg);
 
-    if (si.lazy_connect) {
+    if (!si.keep_alive) {
       establishConnection(si);
     }
 
@@ -91,7 +91,7 @@ function establishConnection(si) {
     console.log(data);
 
     // close connection after response
-    if (si.lazy_connect) {
+    if (!si.keep_alive) {
       si.socket.close();
       si.socket = null;
     }
@@ -128,8 +128,8 @@ function establishConnection(si) {
 
     if (si.handlers.disconnected != null) si.handlers.disconnected();
 
-    if (!si.lazy_connect)
-      timeout(si.uri, 3000, function() {exports.connectImpl(si.uri, si.lazy_connect, si.handlers, si)();});
+    if (si.keep_alive)
+      timeout(si.uri, 3000, function() {exports.connectImpl(si.uri, si.keep_alive, si.handlers, si)();});
   }
 
   si.socket.onclose = function() {
@@ -137,8 +137,8 @@ function establishConnection(si) {
 
     if (si.handlers.disconnected != null) si.handlers.disconnected();
 
-    if (!si.lazy_connect)
-      timeout(si.uri, 3000, function() {exports.connectImpl(si.uri, si.lazy_connect, si.handlers, si)();});
+    if (si.keep_alive)
+      timeout(si.uri, 3000, function() {exports.connectImpl(si.uri, si.keep_alive, si.handlers, si)();});
   }
 }
 
@@ -173,7 +173,7 @@ exports.setHandlersImpl = function(si, handlers) {
   };
 };
 
-exports.connectImpl = function(uri, lazy_connect, handlers, si_old) {
+exports.connectImpl = function(uri, keep_alive, handlers, si_old) {
   return function() {
     if (si_old && si_old.socket) {
       si_old.socket.onclose = undefined;
@@ -188,11 +188,11 @@ exports.connectImpl = function(uri, lazy_connect, handlers, si_old) {
       uri: uri,
       sync_requests: {},
       handlers: handlers,
-      lazy_connect: lazy_connect,
+      keep_alive: keep_alive,
       requests: []
     };
 
-    if (!lazy_connect) {
+    if (keep_alive) {
       establishConnection(si);
     }
 
