@@ -37,12 +37,12 @@ function makeid()
 
 function _send(si, msg) {
   if (si.socket && si.socket.readyState === 1) {
-    console.log("Sending ++ " + msg);
+    if (si.debug_log) console.log("Sending ++ " + msg);
 
     si.socket.send(msg);
   }
   else {
-    console.log("Backlogging ++ " + msg);
+    if (si.debug_log) console.log("Backlogging ++ " + msg);
 
     si.requests = si.requests || [];
     si.requests.push(msg);
@@ -58,7 +58,7 @@ function _send(si, msg) {
 }
 
 function establishConnection(si) {
-  console.log("Connecting to " + si.uri + "...");
+  if (si.debug_log) console.log("Connecting to " + si.uri + "...");
 
   si.socket = new WebSocket(si.uri);
 
@@ -88,7 +88,7 @@ function establishConnection(si) {
   si.socket.onmessage = function(msg) {
     var data = JSON.parse(msg.data);
 
-    console.log(data);
+    if (si.debug_log) console.log(data);
 
     // close connection after response
     if (!si.keep_alive) {
@@ -133,7 +133,7 @@ function establishConnection(si) {
   }
 
   si.socket.onclose = function() {
-    console.log("Closing socket to " + si.uri + "...");
+    if (si.debug_log) console.log("Closing socket to " + si.uri + "...");
 
     if (si.handlers.disconnected != null) si.handlers.disconnected();
 
@@ -173,15 +173,19 @@ exports.setHandlersImpl = function(si, handlers) {
   };
 };
 
-exports.connectImpl = function(uri, keep_alive, handlers, si_old) {
+exports.killConnection = function(si_victim) {
+  si_victim.socket.onclose = undefined;
+  si_victim.socket.onerror = undefined;
+  si_victim.socket.onmessage = undefined;
+  si_victim.socket.onopen = undefined;
+
+  si_victim.socket.close();
+};
+
+exports.connectImpl = function(uri, keep_alive, handlers, si_old, debug_log) {
   return function() {
     if (si_old && si_old.socket) {
-      si_old.socket.onclose = undefined;
-      si_old.socket.onerror = undefined;
-      si_old.socket.onmessage = undefined;
-      si_old.socket.onopen = undefined;
-
-      si_old.socket.close();
+      exports.killConnection(si_old);
     }
 
     var si = si_old || {
@@ -189,6 +193,7 @@ exports.connectImpl = function(uri, keep_alive, handlers, si_old) {
       sync_requests: {},
       handlers: handlers,
       keep_alive: keep_alive,
+      debug_log: debug_log,
       requests: []
     };
 
