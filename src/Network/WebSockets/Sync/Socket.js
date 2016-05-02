@@ -37,12 +37,12 @@ function makeid()
 
 function _send(si, msg) {
   if (si.socket && si.socket.readyState === 1) {
-    if (si.handlers.debug_log) console.log("Sending: " + msg);
+    if (si.handlers.debug) console.log("Sending: " + msg);
 
     si.socket.send(msg);
   }
   else {
-    if (si.handlers.debug_log) console.log("Backlogging: " + msg);
+    if (si.handlers.debug) console.log("Backlogging: " + msg);
 
     si.requests = si.requests || [];
     si.requests.push(msg);
@@ -58,7 +58,7 @@ function _send(si, msg) {
 }
 
 function establishConnection(si) {
-  if (si.handlers.debug_log) console.log("Connecting to " + si.uri + "...");
+  if (si.handlers.debug) console.log("Connecting to " + si.uri + "...");
 
   si.socket = new WebSocket(si.uri);
 
@@ -88,7 +88,7 @@ function establishConnection(si) {
   si.socket.onmessage = function(msg) {
     var data = JSON.parse(msg.data);
 
-    if (si.handlers.debug_log) console.log(data);
+    if (si.handlers.debug) console.log(data);
 
     // close connection after response
     if (!si.keep_alive) {
@@ -133,7 +133,7 @@ function establishConnection(si) {
   }
 
   si.socket.onclose = function() {
-    if (si.handlers.debug_log) console.log("Closing socket to " + si.uri + "...");
+    if (si.handlers.debug) console.log("Closing socket to " + si.uri + "...");
 
     if (si.handlers.disconnected != null) si.handlers.disconnected();
 
