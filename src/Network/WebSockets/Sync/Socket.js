@@ -37,12 +37,12 @@ function makeid()
 
 function _send(si, msg) {
   if (si.socket && si.socket.readyState === 1) {
-    console.log("Sending ++ " + msg);
+    if (si.debug_log) console.log("Sending ++ " + msg);
 
     si.socket.send(msg);
   }
   else {
-    console.log("Backlogging ++ " + msg);
+    if (si.debug_log) console.log("Backlogging ++ " + msg);
 
     si.requests = si.requests || [];
     si.requests.push(msg);
@@ -58,7 +58,7 @@ function _send(si, msg) {
 }
 
 function establishConnection(si) {
-  console.log("Connecting to " + si.uri + "...");
+  if (si.debug_log) console.log("Connecting to " + si.uri + "...");
 
   si.socket = new WebSocket(si.uri);
 
@@ -88,7 +88,7 @@ function establishConnection(si) {
   si.socket.onmessage = function(msg) {
     var data = JSON.parse(msg.data);
 
-    console.log(data);
+    if (si.debug_log) console.log(data);
 
     // close connection after response
     if (si.lazy_connect) {
@@ -133,7 +133,7 @@ function establishConnection(si) {
   }
 
   si.socket.onclose = function() {
-    console.log("Closing socket to " + si.uri + "...");
+    if (si.debug_log) console.log("Closing socket to " + si.uri + "...");
 
     if (si.handlers.disconnected != null) si.handlers.disconnected();
 
@@ -173,7 +173,7 @@ exports.setHandlersImpl = function(si, handlers) {
   };
 };
 
-exports.connectImpl = function(uri, lazy_connect, handlers, si_old) {
+exports.connectImpl = function(uri, lazy_connect, handlers, si_old, debug_log) {
   return function() {
     if (si_old && si_old.socket) {
       si_old.socket.onclose = undefined;
@@ -189,6 +189,7 @@ exports.connectImpl = function(uri, lazy_connect, handlers, si_old) {
       sync_requests: {},
       handlers: handlers,
       lazy_connect: lazy_connect,
+      debug_log: debug_log,
       requests: []
     };
 
